@@ -4,6 +4,8 @@ const platformImage = new Image();
 platformImage.src = "img/plataforma.png";
 
 let player, gravity, keys, platforms, objective, currentLevel, movingPlatforms = [];
+let timer = 30;
+let trapCoin;
 let timerInterval;
 
 
@@ -30,6 +32,7 @@ const FRAME_DELAY = 10;
 document.getElementById("fase1").addEventListener("click", () => startGame(1));
 document.getElementById("fase2").addEventListener("click", () => startGame(2));
 document.getElementById("fase3").addEventListener("click", () => startGame(3));
+document.getElementById("fase4").addEventListener("click", () => startGame(4));
 document.getElementById("fase5").addEventListener("click", () => startGame(5));
 
 
@@ -41,6 +44,7 @@ function startGame(level) {
   gravity = 0.3;
   keys = {};
   movingPlatforms = [];
+  timer = 20;
 
   player = {
     x: 50,
@@ -85,7 +89,21 @@ function startGame(level) {
     objective = { x: 850, y: 350, width: 30, height: 30, color: "gold" };
     player.x = 100;
     player.y = 200;
-    } else if (level === 5) {
+    } else if (level === 4) {
+      platforms = [
+      { x: 0, y: 550, width: 100, height: 20 },
+      { x: 150, y: 480, width: 100, height: 20 },
+      { x: 300, y: 410, width: 100, height: 20 },
+      { x: 450, y: 340, width: 100, height: 20, type: "moving", direction: "vertical", speed: 1.5, range: 80, initial: 340 },
+      { x: 600, y: 270, width: 100, height: 20, type: "moving", direction: "horizontal", speed: 2, range: 80, initial: 600 },
+      { x: 750, y: 200, width: 100, height: 20, type: "falling", triggered: false, fallDelay: 30, fallSpeed: 4, timer: 0 },
+      { x: 900, y: 130, width: 100, height: 20, type: "moving", direction: "horizontal", speed: 2.5, range: 100, initial: 900 },
+      ];
+      objective = { x: 1020, y: 100, width: 30, height: 30, color: "green" };
+      trapCoin = { x: 320, y: 380, width: 20, height: 20, color: "yellow" };
+      startTimer();
+  
+      } else if (level === 5) {
         platforms = [
           { x: 0, y: 370, width: 90, height: 30 },
           { x: 100, y: 320, width: 20, height: 15, type: "moving", direction: "vertical", speed: 4, range: 80, initial: 240 },
@@ -128,7 +146,7 @@ function update() {
   }
 
   if ((keys["ArrowUp"] || keys["KeyW"]) && !player.jumping) {
-    player.dy = -10;
+    player.dy = -7;
     player.jumping = true;
   }
 
@@ -153,6 +171,7 @@ function update() {
   if (currentLevel === 1 || currentLevel === 2) updateLevel1And2();
   else if (currentLevel === 3) updateLevel3();
   else if (currentLevel === 5) updateLevel5();
+  else if (currentLevel === 4) updateLevel4();
 }
 
 function updateLevel1And2() {
@@ -233,6 +252,157 @@ function updateLevel3() {
   animationId = requestAnimationFrame(update);
 }
 
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timer--;
+    if (timer <= 0) {
+      clearInterval(timerInterval);
+      showGameOver("Tempo esgotado!");
+    }
+  }, 1000);
+}
+
+function updateLevel4() {
+
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y + player.height > canvas.height) {
+    clearInterval(timerInterval);
+    showGameOver("Game Over!");
+    return;
+  }
+
+  if (player.y < 0) {
+    player.y = 0;
+    player.dy = 0;
+  }
+
+  const prevTop = player.y - player.dy;
+
+  for (let plat of platforms) {
+    // === Plataformas móveis ===
+    if (plat.type === "moving") {
+      if (plat.direction === "vertical") {
+        plat.y += plat.speed;
+        if (plat.y > plat.initial + plat.range || plat.y < plat.initial - plat.range) {
+          plat.speed *= -1;
+        }
+      } else if (plat.direction === "horizontal") {
+        plat.x += plat.speed;
+        if (plat.x > plat.initial + plat.range || plat.x < plat.initial - plat.range) {
+          plat.speed *= -1;
+        }
+      }
+    }
+
+    // === Plataformas que caem ===
+    if (plat.type === "falling") {
+      const touching = (
+        player.x < plat.x + plat.width &&
+        player.x + player.width > plat.x &&
+        player.y + player.height > plat.y &&
+        player.y < plat.y + plat.height
+      );
+
+      if (touching && !plat.triggered) {
+        plat.triggered = true;
+        plat.timer = -1;
+      }
+
+      if (plat.triggered) {
+        plat.timer++;
+        if (plat.timer >= plat.fallDelay) {
+          plat.y += plat.fallSpeed;
+        }
+      }
+    }
+
+  if (
+  player.x < plat.x + plat.width &&
+  player.x + player.width > plat.x &&
+  player.y < plat.y + plat.height &&
+  player.y + player.height > plat.y
+) {
+  // Colisão por cima
+  if (player.dy >= 0 && player.y + player.height - player.dy <= plat.y) {
+    player.y = plat.y - player.height;
+    player.dy = 0;
+    player.jumping = false;
+
+    if (plat.type === "moving" && plat.direction === "vertical") {
+      player.y += plat.speed; // move o jogador junto com a plataforma
+    }
+  }
+  // Colisão por baixo
+  else if (prevTop >= plat.y + plat.height && player.dy < 0) {
+    player.y = plat.y + plat.height;
+    player.dy = 0;
+  }
+  // Colisão lateral esquerda (jogador à direita da plataforma)
+  else if (player.dx > 0 && player.x + player.width > plat.x && player.x < plat.x) {
+    player.x = plat.x - player.width;
+    player.dx = 0;
+  }
+  // Colisão lateral direita (jogador à esquerda da plataforma)
+  else if (player.dx < 0 && player.x < plat.x + plat.width && player.x + player.width > plat.x + plat.width) {
+    player.x = plat.x + plat.width;
+    player.dx = 0;
+  }
+}
+
+    
+  }
+
+  // Colisão com moeda maldita
+  if (
+    player.x < trapCoin.x + trapCoin.width &&
+    player.x + player.width > trapCoin.x &&
+    player.y < trapCoin.y + trapCoin.height &&
+    player.y + player.height > trapCoin.y
+  ) {
+    player.x = player.startX;
+    player.y = player.startY;
+    player.dy = 0;
+  }
+
+  // Colisão com objetivo
+  if (
+    player.x < objective.x + objective.width &&
+    player.x + player.width > objective.x &&
+    player.y < objective.y + objective.height &&
+    player.y + player.height > objective.y
+  ) {
+    clearInterval(timerInterval);
+    showVictoryMessage();
+    return;
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "20px sans-serif";
+  ctx.fillText(`${timer}`, 580, 580);
+
+  ctx.fillStyle = trapCoin.color;
+  ctx.fillRect(trapCoin.x, trapCoin.y, trapCoin.width, trapCoin.height);
+
+
+if (player.y + player.height > canvas.height && !onPlatform) {
+    showGameOver();
+    return;
+  }
+
+  drawGame();
+
+  if (checkVictory()) {
+    showVictoryMessage();
+    return;
+  }
+
+  animationId = requestAnimationFrame(update);
+}
+
+
 function updateLevel5() {
   if (player.y < 0) {
     player.y = 0;
@@ -292,7 +462,7 @@ function updateLevel5() {
 
   platforms = platforms.filter(plat => plat.y < canvas.height + 100);
 
-  // ✅ Correção aqui
+ 
   if (player.y + player.height > canvas.height && !onPlatform) {
     showGameOver();
     return;
