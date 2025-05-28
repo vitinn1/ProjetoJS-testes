@@ -46,6 +46,7 @@ function startGame(level) {
   movingPlatforms = [];
   timer = 20;
 
+  // Posição inicial
   player = {
     x: 50,
     y: 300,
@@ -55,17 +56,23 @@ function startGame(level) {
     dy: 0,
     jumping: false,
     facingLeft: false,
-    state: "idle"
+    state: "idle",
+    startX: 50,     // ✅ Adicionado
+    startY: 300     // ✅ Adicionado
   };
+
+  trapCoin = null; // ✅ Limpa qualquer trapCoin anterior
 
   if (level === 1) {
     platforms = [
-      { x: 0, y: 370, width: 800, height: 30 },
-      { x: 200, y: 300, width: 100, height: 20 },
-      { x: 400, y: 250, width: 100, height: 20 },
-      { x: 550, y: 125, width: 100, height: 20 },
+      { x: 0, y: 370, width: 200, height: 30 },
+      { x: 420, y: 370, width: 200, height: 30 },
+
+      { x: 250, y: 300, width: 100, height: 20 },
+      { x: 450, y: 250, width: 100, height: 20 },
+      { x: 600, y: 200, width: 100, height: 20 },
     ];
-    objective = { x: 650, y: 90, width: 30, height: 30, color: "green" };
+    objective = { x: 750, y: 120, width: 30, height: 30, color: "green" };
 
   } else if (level === 2) {
     platforms = [
@@ -89,8 +96,11 @@ function startGame(level) {
     objective = { x: 850, y: 350, width: 30, height: 30, color: "gold" };
     player.x = 100;
     player.y = 200;
-    } else if (level === 4) {
-      platforms = [
+    player.startX = 100; // Atualiza ponto inicial
+    player.startY = 200;
+
+  } else if (level === 4) {
+    platforms = [
       { x: 0, y: 550, width: 100, height: 20 },
       { x: 150, y: 480, width: 100, height: 20 },
       { x: 300, y: 410, width: 100, height: 20 },
@@ -98,29 +108,31 @@ function startGame(level) {
       { x: 600, y: 270, width: 100, height: 20, type: "moving", direction: "horizontal", speed: 2, range: 80, initial: 600 },
       { x: 750, y: 200, width: 100, height: 20, type: "falling", triggered: false, fallDelay: 30, fallSpeed: 4, timer: 0 },
       { x: 900, y: 130, width: 100, height: 20, type: "moving", direction: "horizontal", speed: 2.5, range: 100, initial: 900 },
-      ];
-      objective = { x: 1020, y: 100, width: 30, height: 30, color: "green" };
-      trapCoin = { x: 320, y: 380, width: 20, height: 20, color: "yellow" };
-      startTimer();
+    ];
+    objective = { x: 1020, y: 100, width: 30, height: 30, color: "green" };
+    trapCoin = { x: 320, y: 380, width: 20, height: 20, color: "yellow" }; // Trapcoin adicionada
+    startTimer();
   
-      } else if (level === 5) {
-        platforms = [
-          { x: 0, y: 370, width: 90, height: 30 },
-          { x: 100, y: 320, width: 20, height: 15, type: "moving", direction: "vertical", speed: 4, range: 80, initial: 240 },
-          { x: 220, y: 270, width: 20, height: 15, type: "moving", direction: "vertical", speed: 6, range: 80, initial: 240 },
-          { x: 370, y: 220, width: 20, height: 15, type: "moving", direction: "vertical", speed: 8, range: 80, initial: 240 },
-          { x: 520, y: 170, width: 20, height: 15, type: "moving", direction: "vertical", speed: 10, range: 80, initial: 240 },
-          { x: 680, y: 200, width: 10, height: 430, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5}, // Essa aqui
-          { x: 770, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
-          { x: 910, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
-          { x: 1050, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
-        ];
-        objective = { x: 1130, y: 500, width: 30, height: 30, color: "gold"};
-      }
+  } else if (level === 5) {
+    platforms = [
+      { x: 0, y: 370, width: 90, height: 30 },
+      { x: 100, y: 320, width: 20, height: 15, type: "moving", direction: "vertical", speed: 3, range: 80, initial: 240 },
+      { x: 220, y: 270, width: 20, height: 15, type: "moving", direction: "vertical", speed: 4, range: 80, initial: 240 },
+      { x: 320, y: 270, width: 20, height: 15, type: "moving", direction: "vertical", speed: 5, range: 80, initial: 240 },
+      { x: 430, y: 220, width: 20, height: 15, type: "moving", direction: "vertical", speed: 6, range: 80, initial: 240 },
+      { x: 550, y: 170, width: 20, height: 15, type: "moving", direction: "vertical", speed: 8, range: 80, initial: 240 },
+      { x: 680, y: 200, width: 10, height: 430, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5}, // Essa aqui
+      { x: 800, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
+      { x: 910, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
+      { x: 1000, y: 550, width: 20, height: 15, type: "falling", triggered: false, fallDelay: 2, fallSpeed: 5},
 
+    ];
+    objective = { x: 1110, y: 500, width: 30, height: 30, color: "gold"};
+  }
 
   animationId = requestAnimationFrame(update);
 }
+
 
 document.addEventListener("keydown", e => keys[e.code] = true);
 document.addEventListener("keyup", e => keys[e.code] = false);
@@ -170,8 +182,8 @@ function update() {
 
   if (currentLevel === 1 || currentLevel === 2) updateLevel1And2();
   else if (currentLevel === 3) updateLevel3();
-  else if (currentLevel === 5) updateLevel5();
   else if (currentLevel === 4) updateLevel4();
+  else if (currentLevel === 5) updateLevel5();
 }
 
 function updateLevel1And2() {
@@ -193,7 +205,7 @@ function updateLevel1And2() {
       player.y + player.height > plat.y
     ) {
       player.y = plat.y - player.height;
-      player.dy = 0;
+      player.dy = Math.min(player.dy, 1);
       player.jumping = false;
     }
   }
@@ -230,7 +242,7 @@ function updateLevel3() {
       player.dy >= 0
     ) {
       player.y = plat.y - player.height;
-      player.dy = 0;
+      player.dy = Math.min(player.dy, 1);
       player.jumping = false;
       onPlatform = true;
     }
@@ -264,6 +276,8 @@ function startTimer() {
 }
 
 function updateLevel4() {
+
+  let onPlatform = false;
 
   if (player.x < 0) player.x = 0;
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
@@ -329,6 +343,7 @@ function updateLevel4() {
     player.y = plat.y - player.height;
     player.dy = 0;
     player.jumping = false;
+    onPlatform = true;
 
     if (plat.type === "moving" && plat.direction === "vertical") {
       player.y += plat.speed; // move o jogador junto com a plataforma
@@ -354,17 +369,23 @@ function updateLevel4() {
     
   }
 
-  // Colisão com moeda maldita
-  if (
+// Colisão com moeda maldita
+if (trapCoin && 
     player.x < trapCoin.x + trapCoin.width &&
     player.x + player.width > trapCoin.x &&
     player.y < trapCoin.y + trapCoin.height &&
     player.y + player.height > trapCoin.y
-  ) {
-    player.x = player.startX;
-    player.y = player.startY;
-    player.dy = 0;
-  }
+) {
+  player.x = player.startX;
+  player.y = player.startY;
+  player.dy = 0;
+}
+
+// Desenhar trapCoin
+if (trapCoin) {
+  ctx.fillStyle = trapCoin.color;
+  ctx.fillRect(trapCoin.x, trapCoin.y, trapCoin.width, trapCoin.height);
+}
 
   // Colisão com objetivo
   if (
@@ -382,9 +403,6 @@ function updateLevel4() {
   ctx.fillStyle = "white";
   ctx.font = "20px sans-serif";
   ctx.fillText(`${timer}`, 580, 580);
-
-  ctx.fillStyle = trapCoin.color;
-  ctx.fillRect(trapCoin.x, trapCoin.y, trapCoin.width, trapCoin.height);
 
 
 if (player.y + player.height > canvas.height && !onPlatform) {
@@ -460,7 +478,7 @@ function updateLevel5() {
     }
   }
 
-  platforms = platforms.filter(plat => plat.y < canvas.height + 100);
+  platforms = platforms.filter(plat => plat.type !== "falling" || plat.y < canvas.height + 100);
 
  
   if (player.y + player.height > canvas.height && !onPlatform) {
@@ -505,7 +523,7 @@ function drawGame() {
   }
   ctx.restore();
 
-  // === Desenha todas as plataformas ===
+  // Desenhar plataformas
   for (let plat of platforms) {
     if (platformImage.complete) {
       ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
@@ -515,10 +533,23 @@ function drawGame() {
     }
   }
 
-  // === Desenha o objetivo (depois das plataformas!) ===
+  // Desenhar trapCoin aqui (visível)
+if (trapCoin) {
+  ctx.fillStyle = trapCoin.color;
+  ctx.fillRect(trapCoin.x, trapCoin.y, trapCoin.width, trapCoin.height);
+}
+  // Desenhar objetivo
   ctx.fillStyle = objective.color;
   ctx.fillRect(objective.x, objective.y, objective.width, objective.height);
+
+  // Mostrar timer
+  
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Time: ${Math.floor(timer / 1000)}s`, 10, 30);
+  
 }
+
 
 function checkVictory() {
   return (
@@ -560,9 +591,9 @@ function showGameOver() {
   const x = (canvas.width - textWidth) / 2;
   const y = canvas.height / 2;
   ctx.fillText(message, x, y);
+  
   setTimeout(() => {
-    canvas.style.display = "none";
-    document.getElementById("menu").style.display = "block";
+    startGame(currentLevel);
   }, 2000);
 }
 
